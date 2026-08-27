@@ -25,6 +25,7 @@ jobs:
           pip install flet
 
       - name: Build APK
+        working-directory: distra
         run: |
           flet build apk \
             --project distra \
@@ -38,4 +39,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Distra-APK
-          path: build/apk/*.apk
+          path: distra/build/apk/*.apk
