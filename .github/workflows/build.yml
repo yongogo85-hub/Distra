@@ -2,6 +2,9 @@ name: Build Distra APK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -23,7 +26,11 @@ jobs:
 
       - name: Build APK
         run: |
-          flet build apk --project distra --product Distra --org dev.flet --build-version 1.0.0
+          flet build apk \
+            --project distra \
+            --product Distra \
+            --org dev.flet \
+            --build-version 1.0.0
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
