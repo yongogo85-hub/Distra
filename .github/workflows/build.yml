@@ -19,13 +19,16 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Prepare project
+        run: |
+          cp 304713 main.py
+
       - name: Install Flet
         run: |
           python -m pip install --upgrade pip
           pip install flet
 
       - name: Build APK
-        working-directory: distra
         run: |
           flet build apk \
             --project distra \
@@ -39,4 +42,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Distra-APK
-          path: distra/build/apk/*.apk
+          path: build/apk/*.apk
