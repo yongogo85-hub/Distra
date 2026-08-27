@@ -21,30 +21,56 @@ class DistraApp:
     async def finish_splash(self):
         await asyncio.sleep(1.5)
         if self.current == "splash":
-            self.show("home" if self.state.logged_in else "login", keep_history=False)
+            self.show(
+                "home" if self.state.logged_in else "login",
+                keep_history=False
+            )
 
     def show(self, screen, keep_history=True):
         if keep_history and self.current not in ("splash", screen):
             self.history.append(self.current)
+
         self.current = screen
+
         builder = {
-            "splash": screens.splash, "login": screens.login, "register": screens.register,
-            "home": screens.home, "communities": screens.communities, "community": screens.community,
-            "messages": screens.messages, "dm_chat": lambda a: screens.chat(a, True),
-            "chat": lambda a: screens.chat(a, False), "notifications": screens.notifications,
-            "profile": screens.profile, "friends": screens.friends, "settings": screens.settings,
-            "privacy": lambda a: screens.legal(a, "privacy"), "terms": lambda a: screens.legal(a, "terms"),
+            "splash": screens.splash,
+            "login": screens.login,
+            "register": screens.register,
+            "home": screens.home,
+            "communities": screens.communities,
+            "community": screens.community,
+            "messages": screens.messages,
+            "dm_chat": lambda a: screens.chat(a, True),
+            "chat": lambda a: screens.chat(a, False),
+            "notifications": screens.notifications,
+            "profile": screens.profile,
+            "friends": screens.friends,
+            "settings": screens.settings,
+            "privacy": lambda a: screens.legal(a, "privacy"),
+            "terms": lambda a: screens.legal(a, "terms"),
             "guidelines": lambda a: screens.legal(a, "guidelines"),
         }
+
         self._page.clean()
         self._page.add(builder[screen](self))
 
     def go(self, screen):
-        tab_screens = {"home", "communities", "messages", "notifications", "profile"}
+        tab_screens = {
+            "home",
+            "communities",
+            "messages",
+            "notifications",
+            "profile",
+        }
         self.show(screen, keep_history=screen not in tab_screens)
 
     def back(self):
-        self.show(self.history.pop() if self.history else ("home" if self.state.logged_in else "login"), keep_history=False)
+        screen = (
+            self.history.pop()
+            if self.history
+            else ("home" if self.state.logged_in else "login")
+        )
+        self.show(screen, keep_history=False)
 
     def login(self):
         self.state.logged_in = True
@@ -60,14 +86,28 @@ class DistraApp:
         return english if self.state.language == "en" else arabic
 
     def toggle_language(self):
-        self.state.language = "en" if self.state.language == "ar" else "ar"
+        self.state.language = (
+            "en" if self.state.language == "ar" else "ar"
+        )
         self._page.rtl = self.state.language == "ar"
-        self.notice("English mode is enabled." if self.state.language == "en" else "تم تفعيل العربية.")
+
+        self.notice(
+            "English mode is enabled."
+            if self.state.language == "en"
+            else "تم تفعيل العربية."
+        )
+
         self.show(self.current, keep_history=False)
 
     def toggle_theme(self):
         self.state.dark_mode = not self.state.dark_mode
-        self._page.theme_mode = ft.ThemeMode.DARK if self.state.dark_mode else ft.ThemeMode.LIGHT
+
+        self._page.theme_mode = (
+            ft.ThemeMode.DARK
+            if self.state.dark_mode
+            else ft.ThemeMode.LIGHT
+        )
+
         self._page.update()
 
     def mark_read(self):
@@ -75,25 +115,56 @@ class DistraApp:
         self.notice("تم تعليم جميع الإشعارات كمقروءة.")
 
     def notice(self, message):
-        self._page.show_dialog(ft.AlertDialog(title=ft.Text("Distra"), content=ft.Text(message), actions=[ft.Button(content="حسناً", on_click=lambda e: self._page.pop_dialog())]))
+        self._page.show_dialog(
+            ft.AlertDialog(
+                title=ft.Text("Distra"),
+                content=ft.Text(message),
+                actions=[
+                    ft.Button(
+                        content="حسناً",
+                        on_click=lambda e: self._page.pop_dialog(),
+                    )
+                ],
+            )
+        )
 
     def delete_dialog(self):
-        self._page.show_dialog(ft.AlertDialog(
-            modal=True,
-            title=ft.Text("حذف الحساب نهائياً"),
-            content=ft.Text("الحذف دائم وسيزيل بيانات الحساب والملف الشخصي والمحتوى المرتبط به وفق سياسة الاحتفاظ. رابط طلب الحذف الخارجي: [ACCOUNT_DELETION_URL]"),
-            actions=[ft.Button(content="إلغاء", on_click=lambda e: self._page.pop_dialog()), ft.Button(content="تأكيد الحذف", icon=ft.Icons.DELETE_FOREVER, on_click=lambda e: self.confirm_delete())],
-        ))
+        self._page.show_dialog(
+            ft.AlertDialog(
+                modal=True,
+                title=ft.Text("حذف الحساب نهائياً"),
+                content=ft.Text(
+                    "الحذف دائم وسيزيل بيانات الحساب والملف الشخصي "
+                    "والمحتوى المرتبط به وفق سياسة الاحتفاظ. "
+                    "رابط طلب الحذف الخارجي: [ACCOUNT_DELETION_URL]"
+                ),
+                actions=[
+                    ft.Button(
+                        content="إلغاء",
+                        on_click=lambda e: self._page.pop_dialog(),
+                    ),
+                    ft.Button(
+                        content="تأكيد الحذف",
+                        icon=ft.Icons.DELETE_FOREVER,
+                        on_click=lambda e: self.confirm_delete(),
+                    ),
+                ],
+            )
+        )
 
     def confirm_delete(self):
         self._page.pop_dialog()
         self.state.logged_in = False
         self.show("login", keep_history=False)
-        self.notice("تمت محاكاة حذف الحساب محلياً. استخدم [ACCOUNT_DELETION_URL] عند توفره.")
+        self.notice(
+            "تمت محاكاة حذف الحساب محلياً. "
+            "استخدم [ACCOUNT_DELETION_URL] عند توفره."
+        )
 
 
 def main(page: ft.Page):
     DistraApp(page).start()
 
 
-ft.run(main)
+if __name__ == "__main__":
+    ft.run(main)
