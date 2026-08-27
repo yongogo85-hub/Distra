@@ -22,6 +22,8 @@ jobs:
       - name: Prepare project
         run: |
           cp 304713 main.py
+          cp 304708 components.py
+          cp 304709 models.py
 
       - name: Install Flet
         run: |
