@@ -1,0 +1,76 @@
+import flet as ft
+from components import avatar, card, primary, title, search, app_header, CYAN, MUTED
+from models import USERS, COMMUNITIES, LEGAL
+
+
+def splash(app):
+    return ft.Container(expand=True, alignment=ft.Alignment.CENTER, content=ft.Column(horizontal_alignment=ft.CrossAxisAlignment.CENTER, controls=[ft.Image(src="icon.svg", width=116, height=116, semantics_label="Distra"), ft.Text("Distra", size=34, weight=ft.FontWeight.W_700), ft.Text("مساحتك للتواصل الحقيقي", color=MUTED), ft.ProgressRing(width=26, height=26, color=CYAN)]))
+
+
+def login(app):
+    return ft.Container(expand=True, padding=28, content=ft.Column(scroll=ft.ScrollMode.AUTO, horizontal_alignment=ft.CrossAxisAlignment.CENTER, controls=[ft.Row(alignment=ft.MainAxisAlignment.END, controls=[ft.IconButton(icon=ft.Icons.LANGUAGE, tooltip="Language", on_click=lambda e: app.toggle_language())]), ft.Image(src="icon.svg", width=84, height=84), ft.Text(app.tr("مرحباً بك في Distra", "Welcome to Distra"), size=27, weight=ft.FontWeight.W_700), ft.Text(app.tr("تواصل مع مجتمعاتك وأصدقائك", "Connect with your communities and friends."), color=MUTED), ft.TextField(label="البريد الإلكتروني أو اسم المستخدم", prefix_icon=ft.Icons.PERSON), ft.TextField(label="كلمة المرور", prefix_icon=ft.Icons.LOCK, password=True, can_reveal_password=True), ft.Container(height=4), primary("تسجيل الدخول", lambda e: app.login(), ft.Icons.ARROW_FORWARD), ft.Button(content="نسيت كلمة المرور؟", on_click=lambda e: app.notice("سيتم توفير استعادة كلمة المرور عند ربط الخدمة.")), ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[ft.Text("ليس لديك حساب؟"), ft.Button(content="إنشاء حساب", on_click=lambda e: app.go("register"))]), ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[ft.Button(content="سياسة الخصوصية", on_click=lambda e: app.go("privacy")), ft.Text("•"), ft.Button(content="الشروط", on_click=lambda e: app.go("terms"))])]))
+
+
+def register(app):
+    terms = ft.Checkbox(label="أوافق على شروط الخدمة", value=False)
+    return ft.Container(expand=True, padding=24, content=ft.Column(scroll=ft.ScrollMode.AUTO, controls=[app_header("إنشاء حساب", lambda e: app.back()), ft.Text("ابدأ مجتمعك بطريقتك", size=25, weight=ft.FontWeight.W_700), ft.TextField(label="اسم المستخدم", prefix_icon=ft.Icons.PERSON), ft.TextField(label="البريد الإلكتروني", prefix_icon=ft.Icons.MAIL), ft.TextField(label="كلمة المرور", password=True, can_reveal_password=True, prefix_icon=ft.Icons.LOCK), ft.TextField(label="تأكيد كلمة المرور", password=True, can_reveal_password=True, prefix_icon=ft.Icons.LOCK), terms, primary("متابعة", lambda e: app.login() if terms.value else app.notice("يرجى قبول شروط الخدمة للمتابعة."), ft.Icons.ARROW_FORWARD), ft.Button(content="قراءة شروط الخدمة", on_click=lambda e: app.go("terms"))]))
+
+
+def home(app):
+    recent = [conversation_row(app, USERS[0], "أرسلت لك فكرة القناة الجديدة", "الآن", True), conversation_row(app, USERS[1], "هل ننضم إلى النقاش؟", "12:24", False)]
+    return shell(app, 0, ft.Column(scroll=ft.ScrollMode.AUTO, controls=[app_header("Distra", action=ft.IconButton(icon=ft.Icons.LANGUAGE, tooltip="تبديل اللغة", on_click=lambda e: app.toggle_language())), ft.Text("أهلاً، آية ✨", size=26, weight=ft.FontWeight.W_700), ft.Text("كل ما يهمك يحدث الآن.", color=MUTED), search("ابحث عن أشخاص ومجتمعات"), title("محادثات حديثة", ft.Button(content="عرض الكل", on_click=lambda e: app.go("messages"))), *recent, title("إجراءات سريعة"), ft.Row(controls=[primary("رسالة", lambda e: app.go("messages"), ft.Icons.SEND), primary("استكشاف", lambda e: app.go("communities"), ft.Icons.GROUP)]), title("مجتمعاتك"), *[community_card(app, c, joined=True) for c in COMMUNITIES[:2]], title("متصلون الآن"), ft.Row(controls=[avatar(u["avatar"], u["online"], 26) for u in USERS])]))
+
+
+def community_card(app, c, joined=False):
+    return card(ft.Column(controls=[ft.Row(controls=[ft.Container(content=ft.Text(c["icon"], size=24), bgcolor=ft.Colors.PURPLE_800, border_radius=14, padding=12), ft.Column(expand=True, controls=[ft.Text(c["name"], weight=ft.FontWeight.W_700), ft.Text(c["desc"], color=MUTED)]), ft.Button(content="فتح" if joined else "انضم", on_click=lambda e: app.go("community"))]), ft.Text(f'{c["members"]} عضو · {c["online"]} متصل', color=CYAN)]), lambda e: app.go("community"))
+
+
+def communities(app):
+    return shell(app, 1, ft.Column(scroll=ft.ScrollMode.AUTO, controls=[app_header("المجتمعات", action=ft.IconButton(icon=ft.Icons.ADD, tooltip="إنشاء مجتمع", on_click=lambda e: app.notice("إنشاء المجتمع سيتاح عند ربط الخدمة."))), search("ابحث عن مجتمع"), title("الفئات"), ft.Row(scroll=ft.ScrollMode.AUTO, controls=[ft.Chip(label=ft.Text(x)) for x in ["تقنية", "تصميم", "ألعاب", "تعلم"]]), title("موصى بها"), *[community_card(app, c) for c in COMMUNITIES], title("مجتمعات انضممت إليها"), community_card(app, COMMUNITIES[0], True)]))
+
+
+def community(app):
+    channels = ["# عام", "# شارك-أعمالك", "# سؤال-وجواب", "# اقتراحات"]
+    return ft.Container(expand=True, padding=18, content=ft.Column(scroll=ft.ScrollMode.AUTO, controls=[app_header("تصميم المستقبل", lambda e: app.back(), ft.IconButton(icon=ft.Icons.MORE_VERT, tooltip="خيارات")), card(ft.Row(controls=[ft.Container(content=ft.Text("✦", size=30), bgcolor=ft.Colors.PURPLE_800, padding=15, border_radius=18), ft.Column(expand=True, controls=[ft.Text("تصميم المستقبل", size=20, weight=ft.FontWeight.W_700), ft.Text("1,240 متصل الآن", color=CYAN)]), ft.Button(content="دعوة", on_click=lambda e: app.notice("رابط الدعوة جاهز بعد ربط الخدمة."))])), ft.Text("قنوات نصية", weight=ft.FontWeight.W_700), *[card(ft.Row(controls=[ft.Icon(ft.Icons.TAG, color=MUTED), ft.Text(x, expand=True), ft.Icon(ft.Icons.CHEVRON_LEFT)]), lambda e: app.go("chat")) for x in channels], ft.Text("أعضاء متصلون", weight=ft.FontWeight.W_700), *[ft.Row(controls=[avatar(u["avatar"], True), ft.Text(u["name"])]) for u in USERS[:2]]]))
+
+
+def messages(app):
+    return shell(app, 2, ft.Column(scroll=ft.ScrollMode.AUTO, controls=[app_header("الرسائل", action=ft.IconButton(icon=ft.Icons.ADD, tooltip="رسالة جديدة", on_click=lambda e: app.notice("اختر صديقاً لبدء رسالة."))), search("ابحث في المحادثات"), title("الرسائل المباشرة"), *[conversation_row(app, u, "آخر رسالة في المحادثة", "09:41", i == 0) for i, u in enumerate(USERS)], title("طلبات صداقة"), card(ft.Row(controls=[avatar("avatar_nour.svg"), ft.Column(expand=True, controls=[ft.Text("ليلى حسن", weight=ft.FontWeight.W_700), ft.Text("تريد إضافتك كصديق", color=MUTED)]), ft.Button(content="قبول", on_click=lambda e: app.notice("تم قبول الطلب محلياً."))]))]))
+
+
+def conversation_row(app, user, preview, stamp, unread):
+    return card(ft.Row(controls=[avatar(user["avatar"], user["online"]), ft.Column(expand=True, controls=[ft.Row(controls=[ft.Text(user["name"], weight=ft.FontWeight.W_700, expand=True), ft.Text(stamp, color=MUTED)]), ft.Text(preview, color=MUTED)]), ft.Container(width=9, height=9, bgcolor=CYAN, border_radius=6, visible=unread)]), lambda e: app.go("dm_chat"))
+
+
+def chat(app, direct=False):
+    name = "آية منصور" if direct else "# شارك-أعمالك"
+    return ft.Container(expand=True, padding=16, content=ft.Column(expand=True, controls=[app_header(name, lambda e: app.back(), ft.IconButton(icon=ft.Icons.MORE_VERT, tooltip="خيارات الرسالة")), ft.Text("آية منصور  ·  اليوم 10:02", color=MUTED), ft.Row(controls=[avatar("avatar_aya.svg"), card(ft.Text("أهلاً! شاركت نموذجاً أولياً للتجربة، ما رأيك؟"))]), ft.Row(alignment=ft.MainAxisAlignment.END, controls=[card(ft.Text("جميل جداً، أحببت البساطة والألوان.")), avatar("avatar_nour.svg")]), ft.Text("رد على: أهلاً! شاركت نموذجاً أولياً…", color=CYAN), ft.Row(controls=[ft.IconButton(icon=ft.Icons.ATTACH_FILE, tooltip="إرفاق"), ft.IconButton(icon=ft.Icons.INSERT_EMOTICON, tooltip="رموز تعبيرية"), ft.TextField(hint_text="اكتب رسالة…", expand=True), ft.IconButton(icon=ft.Icons.SEND, tooltip="إرسال", icon_color=CYAN, on_click=lambda e: app.notice("تم إرسال الرسالة محلياً."))])]))
+
+
+def friends(app):
+    return ft.Container(expand=True, padding=16, content=ft.Column(scroll=ft.ScrollMode.AUTO, controls=[app_header("الأصدقاء", lambda e: app.back(), ft.IconButton(icon=ft.Icons.ADD, tooltip="إضافة صديق", on_click=lambda e: app.notice("أدخل اسم المستخدم عند ربط الخدمة."))), search("ابحث عن صديق"), title("متصلون الآن"), *[conversation_row(app, u, "متصل الآن" if u["online"] else "غير متصل", "", False) for u in USERS], title("طلبات الصداقة"), card(ft.Row(controls=[avatar("avatar_nour.svg"), ft.Column(expand=True, controls=[ft.Text("ليلى حسن", weight=ft.FontWeight.W_700), ft.Text("طلب صداقة جديد", color=MUTED)]), ft.Button(content="قبول", on_click=lambda e: app.notice("تم قبول الطلب محلياً.")), ft.IconButton(icon=ft.Icons.DELETE, tooltip="رفض الطلب")]))]))
+
+
+def notifications(app):
+    entries = [("رسالة جديدة", "آية ردت في # شارك-أعمالك", ft.Icons.CHAT), ("طلب صداقة", "ليلى تريد التواصل معك", ft.Icons.PERSON), ("إشارة لك", "تمت الإشارة إليك في تقنية عربية", ft.Icons.NOTIFICATIONS)]
+    return shell(app, 3, ft.Column(scroll=ft.ScrollMode.AUTO, controls=[app_header("الإشعارات", action=ft.Button(content="تعليم الكل كمقروء", on_click=lambda e: app.mark_read())), *[card(ft.Row(controls=[ft.Icon(icon, color=CYAN), ft.Column(expand=True, controls=[ft.Text(head, weight=ft.FontWeight.W_700), ft.Text(body, color=MUTED)]) ]), lambda e: app.go("chat")) for head, body, icon in entries]]))
+
+
+def profile(app):
+    return shell(app, 4, ft.Column(scroll=ft.ScrollMode.AUTO, horizontal_alignment=ft.CrossAxisAlignment.CENTER, controls=[app_header("الملف الشخصي", action=ft.IconButton(icon=ft.Icons.SETTINGS, tooltip="الإعدادات", on_click=lambda e: app.go("settings"))), avatar("avatar_nour.svg", True, 48), ft.Text("آية منصور", size=24, weight=ft.FontWeight.W_700), ft.Text("@aya", color=MUTED), ft.Text("أصمّم تجارب رقمية أهدأ وألطف.", text_align=ft.TextAlign.CENTER), primary("تعديل الملف الشخصي", lambda e: app.notice("تعديل الملف متاح عند ربط الحساب."), ft.Icons.EDIT), title("إحصاءات"), card(ft.Row(alignment=ft.MainAxisAlignment.SPACE_AROUND, controls=[ft.Column(horizontal_alignment=ft.CrossAxisAlignment.CENTER, controls=[ft.Text("12", size=22, weight=ft.FontWeight.W_700), ft.Text("صديق")]), ft.Column(horizontal_alignment=ft.CrossAxisAlignment.CENTER, controls=[ft.Text("3", size=22, weight=ft.FontWeight.W_700), ft.Text("مجتمعات")])])), title("الأصدقاء", ft.Button(content="عرض الكل", on_click=lambda e: app.go("friends"))), *[conversation_row(app, u, u["handle"], "", False) for u in USERS]]))
+
+
+def settings(app):
+    rows = [("الحساب", ft.Icons.PERSON, lambda e: app.notice("إعدادات الحساب محلية في هذا النموذج.")), ("الخصوصية", ft.Icons.LOCK, lambda e: app.go("privacy")), ("الأمان", ft.Icons.SHIELD, lambda e: app.notice("إعدادات الأمان ستتصل بالخدمة لاحقاً.")), ("الإشعارات", ft.Icons.NOTIFICATIONS, lambda e: app.go("notifications")), ("المظهر", ft.Icons.DARK_MODE, lambda e: app.toggle_theme()), ("اللغة / Language", ft.Icons.LANGUAGE, lambda e: app.toggle_language()), ("المساعدة والدعم", ft.Icons.HELP, lambda e: app.notice("تواصل معنا عبر [Privacy Contact Email].")), ("إرشادات المجتمع", ft.Icons.GROUP, lambda e: app.go("guidelines")), ("شروط الخدمة", ft.Icons.DESCRIPTION, lambda e: app.go("terms")), ("سياسة الخصوصية", ft.Icons.PRIVACY_TIP, lambda e: app.go("privacy"))]
+    return ft.Container(expand=True, padding=16, content=ft.Column(scroll=ft.ScrollMode.AUTO, controls=[app_header("الإعدادات", lambda e: app.back()), *[card(ft.Row(controls=[ft.Icon(icon, color=CYAN), ft.Text(label, expand=True), ft.Icon(ft.Icons.CHEVRON_LEFT)]), action) for label, icon, action in rows], card(ft.Row(controls=[ft.Text("الوضع الداكن", expand=True), ft.Switch(value=app.state.dark_mode, on_change=lambda e: app.toggle_theme())])), ft.Button(content="حذف الحساب", icon=ft.Icons.DELETE, on_click=lambda e: app.delete_dialog()), ft.Button(content="تسجيل الخروج", icon=ft.Icons.LOGOUT, on_click=lambda e: app.logout())]))
+
+
+def legal(app, key):
+    heading, body = LEGAL[key]
+    return ft.Container(expand=True, padding=20, content=ft.Column(scroll=ft.ScrollMode.AUTO, controls=[app_header(heading, lambda e: app.back()), ft.Text("آخر تحديث: أغسطس 2026", color=MUTED), ft.Text(body, selectable=True, text_align=ft.TextAlign.RIGHT), ft.Text("للاستفسارات: [Privacy Contact Email]", color=CYAN)]))
+
+
+def shell(app, index, body):
+    labels = [app.tr("الرئيسية", "Home"), app.tr("المجتمعات", "Communities"), app.tr("الرسائل", "Messages"), app.tr("الإشعارات", "Alerts"), app.tr("ملفي", "Profile")]
+    icons = [ft.Icons.HOME, ft.Icons.GROUP, ft.Icons.CHAT, ft.Icons.NOTIFICATIONS, ft.Icons.PERSON]
+    return ft.Container(expand=True, padding=16, content=ft.Column(expand=True, controls=[ft.Container(content=body, expand=True), ft.NavigationBar(selected_index=index, destinations=[ft.NavigationBarDestination(icon=icons[i], label=labels[i]) for i in range(5)], on_change=lambda e: app.go(["home", "communities", "messages", "notifications", "profile"][e.control.selected_index]))]))

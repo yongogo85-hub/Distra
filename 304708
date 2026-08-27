@@ -1,0 +1,68 @@
+import flet as ft
+
+PURPLE = ft.Colors.PURPLE_400
+CYAN = ft.Colors.CYAN_ACCENT_200
+SURFACE = ft.Colors.SURFACE_CONTAINER
+MUTED = ft.Colors.ON_SURFACE_VARIANT
+TEXT = ft.Colors.ON_SURFACE
+
+
+def avatar(src, online=False, r=22):
+    return ft.Stack(
+        controls=[
+            ft.CircleAvatar(foreground_image_src=src, radius=r),
+            ft.Container(
+                width=10,
+                height=10,
+                bgcolor=ft.Colors.TEAL_ACCENT_400 if online else ft.Colors.OUTLINE,
+                border_radius=ft.BorderRadius.all(8),
+                right=0,
+                bottom=1,
+            ),
+        ]
+    )
+
+
+def card(content, click=None):
+    return ft.Container(
+        content=content,
+        bgcolor=SURFACE,
+        border_radius=ft.BorderRadius.all(22),
+        padding=16,
+        shadow=[ft.BoxShadow(blur_radius=18, color=ft.Colors.with_opacity(0.18, ft.Colors.BLACK), offset=ft.Offset(0, 6))],
+        on_click=click,
+        ink=click is not None,
+    )
+
+
+def primary(label, on_click, icon=None):
+    return ft.Button(
+        content=label,
+        icon=icon,
+        on_click=on_click,
+        bgcolor=PURPLE,
+        color=ft.Colors.WHITE,
+        style=ft.ButtonStyle(
+            padding=ft.Padding.symmetric(horizontal=18, vertical=14),
+            shape=ft.RoundedRectangleBorder(radius=ft.BorderRadius.all(15)),
+        ),
+    )
+
+
+def title(text, action=None):
+    heading = ft.Text(text, size=20, weight=ft.FontWeight.W_700, expand=True)
+    return ft.Row(controls=[heading, action] if action else [heading])
+
+
+def search(hint="ابحث"):
+    return ft.TextField(hint_text=hint, prefix_icon=ft.Icons.SEARCH, bgcolor=ft.Colors.SURFACE_CONTAINER_HIGH, border_radius=16)
+
+
+def app_header(label, on_back=None, action=None):
+    controls = []
+    if on_back:
+        controls.append(ft.IconButton(icon=ft.Icons.ARROW_BACK, tooltip="عودة", on_click=on_back))
+    controls.append(ft.Text(label, size=22, weight=ft.FontWeight.W_700, expand=True, text_align=ft.TextAlign.RIGHT))
+    if action:
+        controls.append(action)
+    return ft.Row(controls=controls)

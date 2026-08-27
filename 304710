@@ -1,0 +1,26 @@
+[project]
+name = "distra"
+version = "1.0.0"
+description = "A premium Arabic-first social communication prototype for communities, chats, and friends."
+requires-python = ">=3.12"
+authors = [
+    { name = "GOGO YON", email = "yongogo85@gmail.com" }
+]
+dependencies = [
+    "flet"
+]
+
+[dependency-groups]
+dev = [
+    "flet-cli",
+    "flet-desktop",
+    "flet-web"
+]
+
+[tool.flet.metadata]
+title = "Distra"
+
+[tool.flet]
+org = "dev.flet"
+company = "GOGO YON"
+copyright = "Copyright (C) 2026 by GOGO YON"
