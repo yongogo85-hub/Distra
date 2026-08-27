@@ -30,7 +30,8 @@ jobs:
             --project distra \
             --product Distra \
             --org dev.flet \
-            --build-version 1.0.0
+            --build-version 1.0.0 \
+            --yes
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
