@@ -1,1 +1,32 @@
+name: Build Distra APK
 
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Flet
+        run: |
+          python -m pip install --upgrade pip
+          pip install flet
+
+      - name: Build APK
+        run: |
+          flet build apk --project distra --product Distra --org dev.flet --build-version 1.0.0
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Distra-APK
+          path: build/apk/*.apk
