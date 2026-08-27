@@ -21,9 +21,14 @@ jobs:
 
       - name: Prepare project
         run: |
-          cp 304713 main.py
+          cp 304718 main.py
           cp 304708 components.py
           cp 304709 models.py
+
+      - name: Install Flet
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
       - name: Install Flet
         run: |
