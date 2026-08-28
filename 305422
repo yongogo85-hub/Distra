@@ -1,0 +1,26 @@
+[project]
+name = "distra"
+version = "1.0.0"
+description = "A mobile-first community chat application with Arabic-first navigation and real-data-ready experiences."
+requires-python = ">=3.12"
+authors = [
+    { name = "KkooKk Ahm", email = "ahmkkookk@gmail.com" }
+]
+dependencies = [
+    "flet"
+]
+
+[dependency-groups]
+dev = [
+    "flet-cli",
+    "flet-desktop",
+    "flet-web"
+]
+
+[tool.flet.metadata]
+title = "Distra"
+
+[tool.flet]
+org = "dev.flet"
+company = "KkooKk Ahm"
+copyright = "Copyright (C) 2026 by KkooKk Ahm"

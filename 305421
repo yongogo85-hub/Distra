@@ -1,0 +1,77 @@
+"""Persistence and backend boundary for Distra.
+
+No endpoint is configured in this project. This module deliberately never
+creates account or chat data; wire BackendAdapter to the real API later.
+"""
+
+from dataclasses import dataclass
+from typing import Any
+
+
+SESSION_KEY = "distra.session.token"
+THEME_KEY = "distra.preference.theme"
+LANGUAGE_KEY = "distra.preference.language"
+
+
+class BackendUnavailable(Exception):
+    """Raised when an operation needs a real Distra backend."""
+
+
+@dataclass
+class Session:
+    token: str
+
+
+class BackendAdapter:
+    """Single integration point for Distra's future authenticated API."""
+
+    async def login(self, email: str, password: str) -> Session:
+        raise BackendUnavailable("خدمة تسجيل الدخول غير متصلة بعد.")
+
+    async def register(self, payload: dict[str, str]) -> Session:
+        raise BackendUnavailable("خدمة إنشاء الحسابات غير متصلة بعد.")
+
+    async def validate_session(self, token: str) -> bool:
+        # Fail closed: a saved token is never treated as valid until the API
+        # can validate it.
+        return False
+
+    async def request_password_reset(self, email: str) -> None:
+        raise BackendUnavailable("استعادة كلمة المرور غير متصلة بعد.")
+
+    async def request_phone_code(self, phone: str) -> None:
+        raise BackendUnavailable("التحقق عبر الرسائل النصية غير متاح حالياً.")
+
+    async def verify_phone_code(self, phone: str, code: str) -> Session:
+        raise BackendUnavailable("التحقق عبر الرسائل النصية غير متاح حالياً.")
+
+
+class PreferenceStore:
+    """Persistent local preferences via Flet SharedPreferences."""
+
+    def __init__(self, preferences: Any):
+        self._preferences = preferences
+
+    async def theme(self) -> str:
+        return str(await self._preferences.get(THEME_KEY) or "dark")
+
+    async def language(self) -> str:
+        return str(await self._preferences.get(LANGUAGE_KEY) or "ar")
+
+    async def set_theme(self, value: str) -> None:
+        await self._preferences.set(THEME_KEY, value)
+
+    async def set_language(self, value: str) -> None:
+        await self._preferences.set(LANGUAGE_KEY, value)
+
+    async def saved_session(self) -> Session | None:
+        token = await self._preferences.get(SESSION_KEY)
+        return Session(str(token)) if token else None
+
+    async def save_session(self, session: Session) -> None:
+        # Keep only the opaque server-issued token. Replace this storage with
+        # platform secure storage when the production token service is wired.
+        await self._preferences.set(SESSION_KEY, session.token)
+
+    async def clear_session(self) -> None:
+        await self._preferences.remove(SESSION_KEY)

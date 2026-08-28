@@ -1,0 +1,64 @@
+import flet as ft
+
+from components.ui import empty_state, primary_button, quiet_button, screen, setting_row
+
+
+def settings(app):
+    rows = [
+        setting_row("الحساب", "الملف وتفاصيل الحساب", lambda e: app.navigate("account"), ft.Icons.PERSON),
+        setting_row("الخصوصية", "التحكم في الخصوصية", lambda e: app.navigate("privacy_settings"), ft.Icons.PRIVACY_TIP),
+        setting_row("الأمان", "الجلسات والحماية", lambda e: app.navigate("security"), ft.Icons.LOCK),
+        setting_row("الإشعارات", "تفضيلات التنبيهات", lambda e: app.navigate("notification_settings"), ft.Icons.NOTIFICATIONS),
+        setting_row("المظهر", "الوضع الداكن أو الفاتح", lambda e: app.navigate("appearance"), ft.Icons.PERSON),
+        setting_row("اللغة", "العربية أو English", lambda e: app.navigate("language"), ft.Icons.LANGUAGE),
+        setting_row("إرشادات المجتمع", "كيف نحافظ على مساحة آمنة", lambda e: app.navigate("guidelines"), ft.Icons.GROUPS),
+        setting_row("شروط الخدمة", "الأحكام التي تحكم الاستخدام", lambda e: app.navigate("terms"), ft.Icons.PRIVACY_TIP),
+        setting_row("سياسة الخصوصية", "كيف نتعامل مع البيانات", lambda e: app.navigate("privacy"), ft.Icons.PRIVACY_TIP),
+        setting_row("الدعم", "مركز مساعدة Distra", lambda e: app.navigate("support"), ft.Icons.SUPPORT_AGENT),
+        setting_row("تسجيل الخروج", "مسح الجلسة المحفوظة", app.logout, ft.Icons.LOGOUT),
+    ]
+    return screen("الإعدادات", ft.Column(controls=rows, scroll=ft.ScrollMode.AUTO, expand=True), back=lambda e: app.navigate("profile"))
+
+
+def unavailable_settings(app, title, detail):
+    return screen(title, empty_state(ft.Icons.LOCK, "غير متاح حالياً", detail), back=lambda e: app.navigate("settings"))
+
+
+def appearance(app):
+    async def dark(e):
+        await app.set_theme("dark")
+
+    async def light(e):
+        await app.set_theme("light")
+
+    active = "الداكن" if app.theme_name == "dark" else "الفاتح"
+    body = ft.Column(
+        controls=[
+            ft.Text("المظهر الحالي: " + active, size=18, weight=ft.FontWeight.BOLD),
+            ft.Text("يتم حفظ تفضيل المظهر على هذا الجهاز."),
+            primary_button("الوضع الداكن", dark),
+            quiet_button("الوضع الفاتح", light),
+        ],
+        spacing=14,
+    )
+    return screen("المظهر", body, back=lambda e: app.navigate("settings"))
+
+
+def language(app):
+    async def arabic(e):
+        await app.set_language("ar")
+
+    async def english(e):
+        await app.set_language("en")
+
+    current = "العربية" if app.language_code == "ar" else "English"
+    body = ft.Column(
+        controls=[
+            ft.Text("اللغة الحالية: " + current, size=18, weight=ft.FontWeight.BOLD),
+            ft.Text("تُحفظ اللغة واتجاه الواجهة على هذا الجهاز."),
+            primary_button("العربية", arabic),
+            quiet_button("English", english),
+        ],
+        spacing=14,
+    )
+    return screen("اللغة", body, back=lambda e: app.navigate("settings"))

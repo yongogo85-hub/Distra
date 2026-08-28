@@ -1,0 +1,35 @@
+import flet as ft
+
+ACCENT = ft.Colors.PURPLE_ACCENT_200
+CYAN = ft.Colors.CYAN_ACCENT_200
+BORDER = ft.Colors.GREY_800
+
+
+def brand(mark_size: int = 42) -> ft.Control:
+    return ft.Row(
+        controls=[
+            ft.Container(content=ft.Text("D", size=22, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE), bgcolor=ACCENT, border_radius=ft.BorderRadius.all(14), alignment=ft.Alignment.CENTER, width=mark_size, height=mark_size),
+            ft.Column(controls=[ft.Text("Distra", size=22, weight=ft.FontWeight.BOLD), ft.Text("مساحتك للمجتمع والمحادثة", size=11, color=ft.Colors.GREY_400)], spacing=0),
+        ], spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER,
+    )
+
+
+def primary_button(label: str, handler, icon=None) -> ft.Button:
+    return ft.Button(content=label, icon=icon, on_click=handler, bgcolor=ACCENT, color=ft.Colors.WHITE)
+
+
+def quiet_button(label: str, handler, icon=None) -> ft.Button:
+    return ft.Button(content=label, icon=icon, on_click=handler, color=ACCENT)
+
+
+def empty_state(icon, title: str, detail: str, actions: list[ft.Control] | None = None) -> ft.Control:
+    return ft.Container(content=ft.Column(controls=[ft.Icon(icon, size=42, color=CYAN), ft.Text(title, size=20, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER), ft.Text(detail, color=ft.Colors.GREY_400, text_align=ft.TextAlign.CENTER), *(actions or [])], horizontal_alignment=ft.CrossAxisAlignment.CENTER, alignment=ft.MainAxisAlignment.CENTER, spacing=14), alignment=ft.Alignment.CENTER, expand=True, padding=ft.Padding.all(28))
+
+
+def screen(title: str, body: ft.Control, back=None, trailing=None) -> ft.Control:
+    top = ft.Row(controls=[quiet_button("رجوع", back, ft.Icons.ARROW_BACK) if back else ft.Container(), ft.Text(title, size=20, weight=ft.FontWeight.BOLD), trailing or ft.Container()], alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+    return ft.Container(content=ft.Column(controls=[top, ft.Divider(color=BORDER), body], expand=True, spacing=12), padding=ft.Padding.all(18), expand=True)
+
+
+def setting_row(title: str, detail: str, handler, icon) -> ft.Control:
+    return ft.Container(content=ft.Row(controls=[ft.Icon(icon, color=CYAN), ft.Column(controls=[ft.Text(title, weight=ft.FontWeight.W_600), ft.Text(detail, size=12, color=ft.Colors.GREY_400)], expand=True, spacing=2), ft.Icon(ft.Icons.ARROW_BACK, color=ft.Colors.GREY_500)], vertical_alignment=ft.CrossAxisAlignment.CENTER), padding=ft.Padding.all(14), border_radius=ft.BorderRadius.all(16), border=ft.Border.all(1, BORDER), on_click=handler)

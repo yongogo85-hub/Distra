@@ -1,0 +1,143 @@
+import asyncio
+
+import flet as ft
+
+from components.ui import ACCENT, BORDER, brand
+from models import BackendAdapter, PreferenceStore
+from views import auth, legal, main_views, settings, support
+
+
+class DistraApp:
+    def __init__(self, page: ft.Page):
+        self._page = page
+        self.backend = BackendAdapter()
+        self.store = PreferenceStore(page.shared_preferences)
+        self.route = "splash"
+        self.theme_name = "dark"
+        self.language_code = "ar"
+        self.notice = ""
+
+    async def start(self):
+        self.render()
+        await asyncio.sleep(0.45)
+        self.theme_name = await self.store.theme()
+        self.language_code = await self.store.language()
+        session = await self.store.saved_session()
+        if session and await self.backend.validate_session(session.token):
+            self.navigate("home")
+        else:
+            self.navigate("login")
+
+    def configure_page(self):
+        self._page.rtl = self.language_code == "ar"
+        self._page.theme_mode = ft.ThemeMode.DARK if self.theme_name == "dark" else ft.ThemeMode.LIGHT
+        self._page.theme = ft.Theme(color_scheme_seed=ACCENT)
+        self._page.bgcolor = ft.Colors.BLACK if self.theme_name == "dark" else ft.Colors.WHITE
+        self._page.padding = 0
+
+    def set_notice(self, message: str):
+        self.notice = message
+        self.render()
+
+    def navigate(self, route: str):
+        self.route = route
+        self.notice = ""
+        self.render()
+
+    async def set_theme(self, theme_name: str):
+        self.theme_name = theme_name
+        await self.store.set_theme(theme_name)
+        self.set_notice("تم حفظ تفضيل المظهر.")
+
+    async def set_language(self, language_code: str):
+        self.language_code = language_code
+        await self.store.set_language(language_code)
+        self.set_notice("تم حفظ تفضيل اللغة.")
+
+    async def logout(self, e=None):
+        await self.store.clear_session()
+        self.navigate("login")
+
+    def splash(self):
+        return ft.Container(
+            content=ft.Column(
+                controls=[brand(64), ft.ProgressRing(color=ACCENT), ft.Text("جارٍ تجهيز مساحتك...", color=ft.Colors.GREY_400)],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=22,
+            ),
+            expand=True,
+            alignment=ft.Alignment.CENTER,
+        )
+
+    def shell(self, content: ft.Control, selected_index: int):
+        destinations = [
+            ft.NavigationBarDestination(icon=ft.Icons.HOME, label="الرئيسية"),
+            ft.NavigationBarDestination(icon=ft.Icons.GROUPS, label="المجتمعات"),
+            ft.NavigationBarDestination(icon=ft.Icons.CHAT, label="الرسائل"),
+            ft.NavigationBarDestination(icon=ft.Icons.NOTIFICATIONS, label="الإشعارات"),
+            ft.NavigationBarDestination(icon=ft.Icons.PERSON, label="الملف"),
+        ]
+        routes = ["home", "communities", "messages", "notifications", "profile"]
+        return ft.Column(
+            controls=[
+                content,
+                ft.NavigationBar(
+                    destinations=destinations,
+                    selected_index=selected_index,
+                    on_change=lambda e: self.navigate(routes[int(e.data)]),
+                    indicator_color=ACCENT,
+                    border=ft.Border.all(1, BORDER),
+                ),
+            ],
+            expand=True,
+            spacing=0,
+        )
+
+    def current_view(self):
+        pages = {
+            "welcome": auth.welcome,
+            "login": auth.login,
+            "register": auth.register,
+            "phone": auth.phone,
+            "forgot": auth.forgot,
+            "discover": main_views.discover,
+            "community": main_views.community,
+            "channels": main_views.channels,
+            "settings": settings.settings,
+            "account": lambda app: settings.unavailable_settings(app, "الحساب", "تفاصيل الحساب تحتاج اتصال خدمة الحسابات."),
+            "privacy_settings": lambda app: settings.unavailable_settings(app, "الخصوصية", "تفضيلات الخصوصية تحتاج اتصال خدمة الحسابات."),
+            "security": lambda app: settings.unavailable_settings(app, "الأمان", "إدارة الجلسات تحتاج اتصال خدمة الحسابات."),
+            "notification_settings": lambda app: settings.unavailable_settings(app, "الإشعارات", "تفضيلات الإشعارات تحتاج اتصال خدمة الإشعارات."),
+            "appearance": settings.appearance,
+            "language": settings.language,
+            "privacy": legal.privacy,
+            "terms": legal.terms,
+            "guidelines": legal.guidelines,
+            "support": support.support,
+        }
+        if self.route == "splash":
+            return self.splash()
+        if self.route in pages:
+            return pages[self.route](self)
+        main_pages = [main_views.home, main_views.communities, main_views.messages, main_views.notifications, main_views.profile]
+        main_routes = ["home", "communities", "messages", "notifications", "profile"]
+        selected = main_routes.index(self.route) if self.route in main_routes else 0
+        return self.shell(main_pages[selected](self), selected)
+
+    def render(self):
+        self.configure_page()
+        controls = []
+        if self.notice:
+            controls.append(ft.Container(content=ft.Text(self.notice, text_align=ft.TextAlign.CENTER), border=ft.Border.all(1, BORDER), padding=ft.Padding.all(10)))
+        controls.append(self.current_view())
+        self._page.controls = [ft.Column(controls=controls, expand=True, spacing=0)]
+        self._page.update()
+
+
+async def main(page: ft.Page):
+    app = DistraApp(page)
+    await app.start()
+
+
+ft.run(main)

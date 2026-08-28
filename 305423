@@ -1,0 +1,81 @@
+import flet as ft
+from components.ui import ACCENT, BORDER, brand, primary_button, quiet_button, screen
+from models import BackendUnavailable
+
+
+def _form_field(label: str, icon, password: bool = False, keyboard_type=None) -> ft.TextField:
+    return ft.TextField(label=label, prefix_icon=icon, password=password, can_reveal_password=password, keyboard_type=keyboard_type, border_color=BORDER, focused_border_color=ACCENT, border_radius=ft.BorderRadius.all(14), text_align=ft.TextAlign.RIGHT)
+
+
+def welcome(app):
+    return ft.Container(content=ft.Column(controls=[brand(58), ft.Container(height=42), ft.Text("مجتمعات أقرب. محادثات أوضح.", size=28, weight=ft.FontWeight.BOLD), ft.Text("انضم إلى المساحات التي تهمك وتواصل بخصوصية.", color=ft.Colors.GREY_400), ft.Container(height=18), primary_button("تسجيل الدخول", lambda e: app.navigate("login")), quiet_button("إنشاء حساب", lambda e: app.navigate("register"))], horizontal_alignment=ft.CrossAxisAlignment.STRETCH, alignment=ft.MainAxisAlignment.CENTER, spacing=14), padding=ft.Padding.all(28), expand=True)
+
+
+def login(app):
+    email = _form_field("البريد الإلكتروني", ft.Icons.EMAIL)
+    password = _form_field("كلمة المرور", ft.Icons.LOCK, password=True)
+
+    async def submit(e):
+        if not email.value or not password.value:
+            app.set_notice("أدخل البريد الإلكتروني وكلمة المرور.")
+            return
+        try:
+            session = await app.backend.login(email.value, password.value)
+            await app.store.save_session(session)
+            app.navigate("home")
+        except BackendUnavailable as error:
+            app.set_notice(str(error))
+
+    body = ft.Column(controls=[brand(), ft.Container(height=16), ft.Text("مرحباً بعودتك", size=27, weight=ft.FontWeight.BOLD), ft.Text("سجّل الدخول للعودة إلى مجتمعاتك.", color=ft.Colors.GREY_400), email, password, quiet_button("نسيت كلمة المرور؟", lambda e: app.navigate("forgot")), primary_button("تسجيل الدخول", submit), ft.Row(controls=[ft.Text("ليس لديك حساب؟", color=ft.Colors.GREY_400), quiet_button("إنشاء حساب", lambda e: app.navigate("register"))], alignment=ft.MainAxisAlignment.CENTER), quiet_button("استخدام رقم الهاتف", lambda e: app.navigate("phone"))], spacing=14, scroll=ft.ScrollMode.AUTO)
+    return screen("تسجيل الدخول", body, back=lambda e: app.navigate("welcome"))
+
+
+def register(app):
+    username = _form_field("اسم المستخدم", ft.Icons.PERSON)
+    display_name = _form_field("الاسم المعروض", ft.Icons.PERSON)
+    email = _form_field("البريد الإلكتروني", ft.Icons.EMAIL)
+    password = _form_field("كلمة المرور", ft.Icons.LOCK, password=True)
+    birth = _form_field("تاريخ الميلاد", ft.Icons.CALENDAR_MONTH)
+
+    async def submit(e):
+        fields = [username.value, display_name.value, email.value, password.value, birth.value]
+        if not all(fields):
+            app.set_notice("أكمل جميع الحقول المطلوبة.")
+            return
+        try:
+            session = await app.backend.register({"username": username.value, "display_name": display_name.value, "email": email.value, "password": password.value, "date_of_birth": birth.value})
+            await app.store.save_session(session)
+            app.navigate("home")
+        except BackendUnavailable as error:
+            app.set_notice(str(error))
+
+    body = ft.Column(controls=[ft.Text("إنشاء حساب", size=27, weight=ft.FontWeight.BOLD), ft.Text("ابدأ مساحتك على Distra.", color=ft.Colors.GREY_400), username, display_name, email, password, birth, primary_button("إنشاء الحساب", submit), ft.Text("بإنشاء الحساب، أنت توافق على الشروط وسياسة الخصوصية.", size=12, color=ft.Colors.GREY_400), ft.Row(controls=[quiet_button("الشروط", lambda e: app.navigate("terms")), quiet_button("سياسة الخصوصية", lambda e: app.navigate("privacy"))], alignment=ft.MainAxisAlignment.CENTER)], spacing=12, scroll=ft.ScrollMode.AUTO)
+    return screen("حساب جديد", body, back=lambda e: app.navigate("welcome"))
+
+
+def phone(app):
+    country = ft.Dropdown(label="رمز الدولة", value="+966", options=[ft.DropdownOption(key="+966", text="+966"), ft.DropdownOption(key="+20", text="+20"), ft.DropdownOption(key="+971", text="+971")], border_color=BORDER, focused_border_color=ACCENT, border_radius=ft.BorderRadius.all(14))
+    number = _form_field("رقم الهاتف", ft.Icons.PHONE)
+
+    async def request_code(e):
+        if not number.value:
+            app.set_notice("أدخل رقم الهاتف أولاً.")
+            return
+        try:
+            await app.backend.request_phone_code(f"{country.value}{number.value}")
+        except BackendUnavailable as error:
+            app.set_notice(str(error))
+
+    return screen("التحقق برقم الهاتف", ft.Column(controls=[ft.Text("غير متاح حالياً", size=25, weight=ft.FontWeight.BOLD), ft.Text("سيظهر إدخال رمز SMS والتحقق منه هنا عند اتصال الخدمة. لا يتم إنشاء أو قبول رموز وهمية.", color=ft.Colors.GREY_400), country, number, primary_button("إرسال رمز SMS", request_code), quiet_button("إعادة إرسال الرمز", request_code), quiet_button("تغيير رقم الهاتف", lambda e: app.navigate("phone")), quiet_button("العودة لتسجيل الدخول", lambda e: app.navigate("login"))], spacing=14, scroll=ft.ScrollMode.AUTO), back=lambda e: app.navigate("login"))
+
+
+def forgot(app):
+    email = _form_field("البريد الإلكتروني", ft.Icons.EMAIL)
+
+    async def submit(e):
+        try:
+            await app.backend.request_password_reset(email.value)
+        except BackendUnavailable as error:
+            app.set_notice(str(error))
+
+    return screen("استعادة كلمة المرور", ft.Column(controls=[ft.Text("استعد الوصول إلى حسابك", size=24, weight=ft.FontWeight.BOLD), ft.Text("سنرسل تعليمات الاستعادة عند اتصال الخدمة.", color=ft.Colors.GREY_400), email, primary_button("إرسال التعليمات", submit)], spacing=14), back=lambda e: app.navigate("login"))

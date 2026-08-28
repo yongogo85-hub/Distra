@@ -1,0 +1,42 @@
+import flet as ft
+
+from components.ui import BORDER, brand, primary_button, quiet_button, screen
+
+
+def support(app):
+    search = ft.TextField(label="ابحث في المساعدة", prefix_icon=ft.Icons.SEARCH, border_color=BORDER)
+    subject = ft.TextField(label="الموضوع", border_color=BORDER)
+    message = ft.TextField(label="كيف يمكننا المساعدة؟", multiline=True, min_lines=3, max_lines=6, border_color=BORDER)
+
+    def unavailable(e):
+        app.set_notice("إرسال طلبات الدعم غير متصل بعد. لم يتم إنشاء أي طلب.")
+
+    def search_help(e):
+        app.set_notice("البحث في مركز المساعدة سيتاح عند ربط قاعدة المعرفة.")
+
+    faq = [
+        "مساعدة الحساب وتسجيل الدخول",
+        "المجتمعات والقنوات",
+        "الرسائل والمرفقات",
+        "الخصوصية والأمان",
+    ]
+    body = ft.Column(
+        controls=[
+            brand(),
+            ft.Text("دعم Distra", size=26, weight=ft.FontWeight.BOLD),
+            ft.Text("مركز مساعدة جاهز للنشر لاحقاً كـ support.distra.app."),
+            search,
+            primary_button("بحث", search_help, ft.Icons.SEARCH),
+            ft.Text("أسئلة شائعة", size=18, weight=ft.FontWeight.BOLD),
+            *[quiet_button(item, lambda e: app.set_notice("هذه المقالة ستكون متاحة عند ربط مركز المساعدة.")) for item in faq],
+            ft.Text("تواصل مع الدعم", size=18, weight=ft.FontWeight.BOLD),
+            ft.Text("لن يتم إرسال أي طلب حتى يتم توصيل خدمة الدعم."),
+            subject,
+            message,
+            primary_button("إرسال طلب الدعم", unavailable, ft.Icons.SUPPORT_AGENT),
+        ],
+        scroll=ft.ScrollMode.AUTO,
+        expand=True,
+        spacing=14,
+    )
+    return screen("الدعم", body, back=lambda e: app.navigate("settings"))

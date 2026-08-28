@@ -1,0 +1,124 @@
+import flet as ft
+
+from components.ui import BORDER, brand, empty_state, primary_button, quiet_button, screen
+
+
+def home(app):
+    return empty_state(
+        ft.Icons.HOME,
+        "لا توجد نشاطات بعد",
+        "ستظهر هنا تحديثات مجتمعاتك ومحادثاتك الحقيقية.",
+        [
+            primary_button("استكشف المجتمعات", lambda e: app.navigate("communities"), ft.Icons.SEARCH),
+            quiet_button("ابدأ محادثة", lambda e: app.navigate("messages"), ft.Icons.CHAT),
+        ],
+    )
+
+
+def communities(app):
+    return screen(
+        "المجتمعات",
+        empty_state(
+            ft.Icons.GROUPS,
+            "لا توجد مجتمعات بعد",
+            "عند اتصال الخدمة، ستظهر المجتمعات التي انضممت إليها هنا.",
+            [primary_button("اكتشف المجتمعات", lambda e: app.navigate("discover"), ft.Icons.SEARCH)],
+        ),
+        trailing=quiet_button("اكتشف", lambda e: app.navigate("discover"), ft.Icons.SEARCH),
+    )
+
+
+def discover(app):
+    search = ft.TextField(label="ابحث عن مجتمع", prefix_icon=ft.Icons.SEARCH, border_color=BORDER)
+
+    def search_unavailable(e):
+        app.set_notice("البحث عن المجتمعات سيتاح عند اتصال الخدمة.")
+
+    body = ft.Column(
+        controls=[
+            search,
+            primary_button("بحث", search_unavailable, ft.Icons.SEARCH),
+            empty_state(
+                ft.Icons.GROUPS,
+                "لا توجد مجتمعات متاحة",
+                "لا يمكن عرض أو إنشاء نتائج حتى تتصل خدمة المجتمعات بالواجهة الخلفية.",
+            ),
+        ],
+        expand=True,
+        scroll=ft.ScrollMode.AUTO,
+    )
+    return screen("اكتشف المجتمعات", body, back=lambda e: app.navigate("communities"))
+
+
+def community(app):
+    return screen(
+        "المجتمع",
+        empty_state(
+            ft.Icons.GROUPS,
+            "لم يتم اختيار مجتمع",
+            "اختر مجتمعاً حقيقياً من قائمتك لعرض القنوات والأعضاء والإعدادات.",
+            [primary_button("العودة للمجتمعات", lambda e: app.navigate("communities"), ft.Icons.GROUPS)],
+        ),
+        back=lambda e: app.navigate("communities"),
+    )
+
+
+def channels(app):
+    composer = ft.TextField(label="اكتب رسالة", expand=True, border_color=BORDER)
+
+    def unavailable(e):
+        app.set_notice("إرسال الرسائل والمرفقات يتطلب اتصال خدمة المحادثات.")
+
+    body = ft.Column(
+        controls=[
+            empty_state(
+                ft.Icons.CHAT,
+                "لا توجد قناة محددة",
+                "اختر مجتمعاً وقناة نصية حقيقية لبدء المحادثة.",
+                [quiet_button("الذهاب للمجتمعات", lambda e: app.navigate("communities"), ft.Icons.GROUPS)],
+            ),
+            ft.Row(
+                controls=[
+                    quiet_button("مرفق", unavailable, ft.Icons.ATTACH_FILE),
+                    quiet_button("رمز", unavailable, ft.Icons.EMOJI_EMOTIONS),
+                    composer,
+                    primary_button("إرسال", unavailable, ft.Icons.SEND),
+                ],
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+        ],
+        expand=True,
+    )
+    return screen("القناة", body, back=lambda e: app.navigate("communities"))
+
+
+def messages(app):
+    return screen(
+        "الرسائل",
+        empty_state(
+            ft.Icons.CHAT,
+            "لا توجد محادثات بعد",
+            "ستظهر هنا المحادثات المباشرة الحقيقية فقط.",
+            [primary_button("ابدأ محادثة", lambda e: app.set_notice("بدء محادثة جديدة يتطلب خدمة الرسائل."), ft.Icons.PERSON)],
+        ),
+    )
+
+
+def notifications(app):
+    return screen(
+        "الإشعارات",
+        empty_state(ft.Icons.NOTIFICATIONS, "لا توجد إشعارات جديدة", "ستصل الإشعارات الفعلية إلى هنا عند اتصال الخدمة."),
+    )
+
+
+def profile(app):
+    return screen(
+        "الملف الشخصي",
+        empty_state(
+            ft.Icons.PERSON,
+            "الملف الشخصي غير متاح",
+            "يلزم اتصال الحساب لعرض الاسم والصورة والنبذة والمجتمعات والأصدقاء الحقيقية.",
+            [primary_button("إعدادات الحساب", lambda e: app.navigate("settings"), ft.Icons.PERSON)],
+        ),
+        trailing=quiet_button("الإعدادات", lambda e: app.navigate("settings")),
+    )
